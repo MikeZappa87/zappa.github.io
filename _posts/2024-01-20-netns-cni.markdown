@@ -1,0 +1,76 @@
+---
+layout: post
+title:  "X amount of network namespaces for a pod???"
+date:   2024-01-20 11:54:58 -0700
+categories: jekyll update
+---
+Most people think you only can have one network namespace per k8s pod. Does that have to be the case? Maybe you want the process to be 
+completely isolated from the pod network. If the process is running in another network namespace what set the network up? What created 
+the other network namespace? This is where Multus and the CNI plugin come into the picture. The CNI plugin that is executed by Multus via the NetworkAttachmentDefinition is actually creating the second network namespace. The first pod network namespace (the one created by the container runtime) is using whatever CNI plugin for the pod network. The second network namespace path is important as its part of the host path volume mount and also specified in the NetworkAttachmentDefinition. 
+
+{% highlight yaml %}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: router
+  namespace: default
+  annotations:
+    k8s.v1.cni.cncf.io/networks: cust01-network
+spec:
+  containers:
+    - image: frrouting/frr
+      command:
+        - "ip"
+        - "netns"
+        - "exec"
+        - "bgp" 
+        - "/sbin/tini"
+        - "--"
+        - "/usr/lib/frr/docker-start"
+      imagePullPolicy: IfNotPresent
+      name: router
+      volumeMounts:
+        - mountPath: /run/netns/bgp
+          name: bgp-volume
+        - mountPath: /etc/frr
+          name: config-volume
+      securityContext: #If you comment this out, then the container doesn't have the ability to do anything priv like 'ip a, ip r'
+        privileged: true
+  volumes:
+    - name: bgp-volume
+      hostPath:
+        # directory location on host
+        path: /var/run/netns/1234567
+    - name: config-volume
+      configMap:
+        name: frr-daemons
+
+---
+
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: cust01-network
+spec:
+  config: '{
+  "cniVersion": "0.4.0",
+  "name": "customer-1",
+  "type": "make-net",
+  "netid": "1234567",
+  "ipam": {
+    "type": "host-local",
+    "subnet": "10.240.0.0/24",
+    "routes": [
+      {
+        "dst": "0.0.0.0/0"
+      }
+    ]
+  }
+}'
+
+{% endhighlight %}
+
+<img src="{{site.baseurl}}/assets/images/pod.jpg">
+
+
+
