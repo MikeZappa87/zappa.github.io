@@ -4,15 +4,11 @@ title: About
 permalink: /about/
 ---
 
-This is the base Jekyll theme. You can find out more info about customizing your Jekyll theme, as well as basic Jekyll usage documentation at [jekyllrb.com](https://jekyllrb.com/)
+My name is Michael Zappa and I go mainly by my last name. Michael is a popular name however not a lot of Zappa's. I spend a lot of time
+experimenting on my own time in the Kubernetes networking arena where I am the sig-network chair and CNI/containerd maintainer. I have recently
+started a KNI (K8s Network Interface) effort that will become the foundational network api for K8s. When I am not at my desk coding I am 
+trail running, rock climbing, rowing or drinking coffee. 
 
-You can find the source code for Minima at GitHub:
-[jekyll][jekyll-organization] /
-[minima](https://github.com/jekyll/minima)
+Moo and I
 
-You can find the source code for Jekyll at GitHub:
-[jekyll][jekyll-organization] /
-[jekyll](https://github.com/jekyll/jekyll)
-
-
-[jekyll-organization]: https://github.com/jekyll
+<img src="{{site.baseurl}}/assets/images/zappa.jpg">
