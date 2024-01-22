@@ -12,7 +12,7 @@ Lets walk through the yaml below. Notice in the command for the pod below that i
 `ip netns exec bgp ....command goes here.....`
 
 What makes this creative is that we don't need to change the network namespace path since the volume mount keeps it static. 
-In this case its path is `/run/netns/bgp`. You will notice that the Pod and NetworkAttachmentDefinition need to be dynamically so that the network namespace paths line up otherwise the pod will just go into a crash loop. In the case below the `netid` with a value of 1234567 is passed into the CNI plugin and the hostpath is `/run/netns/1234567`.
+In this case its path is `/run/netns/bgp`. You will notice that the Pod and NetworkAttachmentDefinition need to be dynamically so that the network namespace paths line up otherwise the pod will just go into a crash loop. In the case below the `netid` with a value of 1234567 is passed into the CNI plugin (which creates the network namespace with the name of 1234567) and the hostpath is `/run/netns/1234567`.
 
 {% highlight yaml %}
 apiVersion: v1
