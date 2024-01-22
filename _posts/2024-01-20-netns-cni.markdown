@@ -5,8 +5,14 @@ date:   2024-01-20 11:54:58 -0700
 categories: jekyll update
 ---
 Most people think you only can have one network namespace per k8s pod. Does that have to be the case? Maybe you want the process to be 
-completely isolated from the pod network. If the process is running in another network namespace what set the network up? What created 
-the other network namespace? This is where Multus and the CNI plugin come into the picture. The CNI plugin that is executed by Multus via the NetworkAttachmentDefinition is actually creating the second network namespace. The first pod network namespace (the one created by the container runtime) is using whatever CNI plugin for the pod network. The second network namespace path is important as its part of the host path volume mount and also specified in the NetworkAttachmentDefinition. 
+completely isolated from the pod network. While this sounds a little odd, this is a requirement in a lot of user facing cloud services. This also throws a monkey wrench into the current behavior. The container runtime creates the network namespace and executes the CNI plugin. Multus is useful here for executing additional CNI plugins via the NetAttachDef resource however what is creating the extra network namespace? The CNI plugin executed by Multus is creating and setting up the network namespace. Sound weird? It is! 
+
+Lets walk through the yaml below. Notice in the command for the pod below that is using 
+
+`ip netns exec bgp ....command goes here.....`
+
+What makes this creative is that we don't need to change the network namespace path since the volume mount keeps it static. 
+In this case its path is `/run/netns/bgp`. You will notice that the Pod and NetworkAttachmentDefinition need to be dynamically so that the network namespace paths line up otherwise the pod will just go into a crash loop. In the case below the `netid` with a value of 1234567 is passed into the CNI plugin and the hostpath is `/run/netns/1234567`.
 
 {% highlight yaml %}
 apiVersion: v1
@@ -40,7 +46,7 @@ spec:
     - name: bgp-volume
       hostPath:
         # directory location on host
-        path: /var/run/netns/1234567
+        path: /run/netns/1234567
     - name: config-volume
       configMap:
         name: frr-daemons
@@ -56,21 +62,14 @@ spec:
   "cniVersion": "0.4.0",
   "name": "customer-1",
   "type": "make-net",
-  "netid": "1234567",
-  "ipam": {
-    "type": "host-local",
-    "subnet": "10.240.0.0/24",
-    "routes": [
-      {
-        "dst": "0.0.0.0/0"
-      }
-    ]
-  }
+  "netid": "1234567"
 }'
+
 
 {% endhighlight %}
 
 <img src="{{site.baseurl}}/assets/images/pod.jpg">
 
 
+[link to demo ](https://github.com/MikeZappa87/blog-examples/tree/main/posts/x-netns-blog)
 
